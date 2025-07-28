@@ -1,0 +1,257 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+    "id": "7c0bc464-1f42-4e7b-9271-e673a3782772",
+    "manifestVersion": "1.17",
+    "version": "1.0.0",
+    "name": {
+        "short": "Email Tools",
+        "full": "Volvo Task Pane Add-in"
+    },
+    "description": {
+        "short": "An easy way to send email",
+        "full": "This is the template to get started."
+    },
+    "developer": {
+        "name": "Louis Xin",
+        "websiteUrl": "https://www.contoso.com",
+        "privacyUrl": "https://www.contoso.com/privacy",
+        "termsOfUseUrl": "https://www.contoso.com/servicesagreement"
+    },
+    "icons": {
+        "outline": "assets/outline.png",
+        "color": "assets/color.png"
+    },
+    "accentColor": "#230201",
+    "localizationInfo": {
+        "defaultLanguageTag": "en-us",
+        "additionalLanguages": []
+    },
+    "authorization": {
+        "permissions": {
+            "resourceSpecific": [
+                {
+                    "name": "Mailbox.ReadWrite.User",
+                    "type": "Delegated"
+                }
+            ]
+        }
+    },
+    "validDomains": [
+        "contoso.com"
+    ],
+    "extensions": [
+        {
+            "requirements": {
+                "scopes": [
+                    "mail"
+                ],
+                "capabilities": [
+                    {
+                        "name": "Mailbox",
+                        "minVersion": "1.3"
+                    }
+                ]
+            },
+            "runtimes": [
+                {
+                    "requirements": {
+                        "capabilities": [
+                            {
+                                "name": "Mailbox",
+                                "minVersion": "1.3"
+                            }
+                        ]
+                    },
+                    "id": "TaskPaneRuntime",
+                    "type": "general",
+                    "code": {
+                        "page": "https://localhost:3000/taskpane.html",
+                        "script": "https://localhost:3000/taskpane.js"
+                    },
+                    "lifetime": "short",
+                    "actions": [
+                        {
+                            "id": "TaskPaneRuntimeShow",
+                            "type": "openPage",
+                            "pinnable": false,
+                            "view": "dashboard"
+                        }
+                    ]
+                },
+                {
+                    "id": "CommandsRuntime",
+                    "type": "general",
+                    "code": {
+                        "page": "https://localhost:3000/commands.html",
+                        "script": "https://localhost:3000/commands.js"
+                    },
+                    "lifetime": "short",
+                    "actions": [
+                        {
+                            "id": "CommandsRuntimeShow",
+                            "type": "openPage",
+                            "pinnable": false,
+                            "view": "dashboard"
+                        }
+                    ]
+                },
+                {
+                    "requirements": {
+                        "capabilities": [
+                            {
+                                "name": "Mailbox",
+                                "minVersion": "1.15"
+                            }
+                        ]
+                    },
+                    "id": "autorun_runtime",
+                    "type": "general",
+                    "code": {
+                        "page": "https://localhost:3000/commands.html",
+                        "script": "https://localhost:3000/launchevent.js"
+                    },
+                    "lifetime": "short",
+                    "actions": [
+                        {
+                            "id": "onMessageSendHandler",
+                            "type": "executeFunction",
+                            "displayName": "onMessageSendHandler"
+                        }
+                    ]
+                }
+            ],
+            "autoRunEvents": [
+                {
+                    "requirements": {
+                        "capabilities": [
+                            {
+                                "name": "Mailbox",
+                                "minVersion": "1.15"
+                            }
+                        ],
+                        "scopes": [
+                            "mail"
+                        ]
+                    },
+                    "events": [
+                        {
+                            "type": "messageSending",
+                            "actionId": "onMessageSendHandler",
+                            "options": {
+                                "sendMode": "softBlock"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "ribbons": [
+                {
+                    "contexts": [
+                        "mailCompose"
+                    ],
+                    "tabs": [
+                        {
+                            "builtInTabId": "TabDefault",
+                            "groups": [
+                                {
+                                    "id": "msgComposeGroup",
+                                    "label": "Comprehensive tools",
+                                    "icons": [
+                                        {
+                                            "size": 16,
+                                            "url": "https://localhost:3000/assets/icon-16.png"
+                                        },
+                                        {
+                                            "size": 32,
+                                            "url": "https://localhost:3000/assets/icon-32.png"
+                                        },
+                                        {
+                                            "size": 80,
+                                            "url": "https://localhost:3000/assets/icon-80.png"
+                                        }
+                                    ],
+                                    "controls": [
+                                        {
+                                            "id": "comprehensiveToolsMenu",
+                                            "type": "menu",
+                                            "label": "Email Tools",
+                                            "icons": [
+                                                {
+                                                    "size": 16,
+                                                    "url": "https://localhost:3000/assets/icon-16.png"
+                                                },
+                                                {
+                                                    "size": 32,
+                                                    "url": "https://localhost:3000/assets/icon-32.png"
+                                                },
+                                                {
+                                                    "size": 80,
+                                                    "url": "https://localhost:3000/assets/icon-80.png"
+                                                }
+                                            ],
+                                            "supertip": {
+                                                "title": "Email Tools",
+                                                "description": "Access tools for email and attachment validation."
+                                            },
+                                            "actionId": "TaskPaneRuntimeShow",
+                                            "items": [
+                                                {
+                                                    "id": "emailValidatorMenuItem",
+                                                    "type": "menuItem",
+                                                    "label": "Email Validator",
+                                                    "icons": [
+                                                        {
+                                                            "size": 16,
+                                                            "url": "https://localhost:3000/assets/icon-16.png"
+                                                        },
+                                                        {
+                                                            "size": 32,
+                                                            "url": "https://localhost:3000/assets/icon-32.png"
+                                                        },
+                                                        {
+                                                            "size": 80,
+                                                            "url": "https://localhost:3000/assets/icon-80.png"
+                                                        }
+                                                    ],
+                                                    "supertip": {
+                                                        "title": "Email Validation",
+                                                        "description": "Opens the validation task pane."
+                                                    },
+                                                    "actionId": "TaskPaneRuntimeShow"
+                                                },
+                                                {
+                                                    "id": "attachmentValidatorMenuItem",
+                                                    "type": "menuItem",
+                                                    "label": "Attachment Validation",
+                                                    "icons": [
+                                                        {
+                                                            "size": 16,
+                                                            "url": "https://localhost:3000/assets/icon-16.png"
+                                                        },
+                                                        {
+                                                            "size": 32,
+                                                            "url": "https://localhost:3000/assets/icon-32.png"
+                                                        },
+                                                        {
+                                                            "size": 80,
+                                                            "url": "https://localhost:3000/assets/icon-80.png"
+                                                        }
+                                                    ],
+                                                    "supertip": {
+                                                        "title": "Attachment Validation",
+                                                        "description": "Opens the attachment validation task pane."
+                                                    },
+                                                    "actionId": "CommandsRuntimeShow"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -24,7 +24,10 @@ module.exports = async (env, options) => {
         import: ["./src/taskpane/index.jsx", "./src/taskpane/taskpane.html"],
         dependOn: "react",
       },
-      commands: "./src/commands/commands.js",
+      commands: {
+        
+        import: [ "./src/commands/index.jsx","./src/commands/commands.html"],
+      }
     },
     output: {
       clean: true,
@@ -83,7 +86,7 @@ module.exports = async (env, options) => {
       new HtmlWebpackPlugin({
         filename: "commands.html",
         template: "./src/commands/commands.html",
-        chunks: ["polyfill", "commands"],
+        chunks: ["polyfill", "commands","react"],
       }),
       new webpack.ProvidePlugin({
         Promise: ["es6-promise", "Promise"],
