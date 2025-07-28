@@ -27,10 +27,6 @@ const App = (props) => {
   const [previewOnly, setPreviewOnly] = React.useState(true);
   const [previewData, setPreviewData] = React.useState({ to: [], cc: [], bcc: [] });
 
-  // 新增：用于存储邮件正文和主题的状态
-  const [emailBody, setEmailBody] = React.useState("");
-  const [emailSubject, setEmailSubject] = React.useState("");
-
   const listItems = [
     {
       icon: <Mail24Regular />,
@@ -39,10 +35,12 @@ const App = (props) => {
     {
       icon: <ShieldCheckmark24Regular />,
       primaryText: "Avoid invalid or risky emails",
+
     },
     {
       icon: <Lightbulb24Regular />,
       primaryText: "Improve input with live hints",
+
     },
   ];
 
@@ -64,90 +62,59 @@ const App = (props) => {
       });
     });
 
-  // 新增：获取邮件正文的 Promise 包装函数
-  const fetchEmailBody = (item) =>
-    new Promise((resolve) => {
-      // 可以选择获取纯文本 (Office.CoercionType.Text) 或 HTML (Office.CoercionType.Html)
-      item.body.getAsync(Office.CoercionType.Text, (result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-          resolve(result.value);
-        } else {
-          console.error("Failed to get email body:", result.error.message);
-          resolve(""); // 返回空字符串或根据需要处理错误
-        }
-      });
-    });
-
-  // 新增：获取邮件主题的 Promise 包装函数
-  const fetchEmailSubject = (item) =>
-    new Promise((resolve) => {
-      item.subject.getAsync((result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-          resolve(result.value);
-        } else {
-          console.error("Failed to get email subject:", result.error.message);
-          resolve(""); // 返回空字符串或根据需要处理错误
-        }
-      });
-    });
-
-
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const validateEmailWithResult = async (email) => {
-    const API_KEY = "a2efde7285824ec99b3822e4c103bad1";
-    const url = `https://emailvalidation.abstractapi.com/v1/?api_key=${API_KEY}&email=${encodeURIComponent(email)}`;
+    const validateEmailWithOwnBackend = async (email) => {
+    // 您的后端服务器地址和API密钥
+    const API_URL = "http://localhost:3001/validate";
+    const API_KEY = "hj122400";
 
     try {
-      const res = await fetch(url);
-      const result = await res.json();
-      console.log("验证结果:", email, result);
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': API_KEY
+        },
+        body: JSON.stringify({ email: email })
+      });
 
-      const {
-        is_valid_format,
-        is_disposable_email,
-        is_mx_found,
-        is_smtp_valid,
-        deliverability,
-        autocorrect,
-      } = result;
+      if (!response.ok) {
+        console.error("API request failed with status:", response.status);
+        // 如果API请求失败 (例如密钥错误), 我们默认它无效
+        return { valid: false };
+      }
 
-      const valid =
-        is_valid_format?.value === true &&
-        is_disposable_email?.value === false &&
-        is_mx_found?.value === true &&
-        is_smtp_valid?.value === true &&
-        deliverability !== "UNKNOWN";
+      const result = await response.json();
+      console.log("后端验证结果:", email, result);
+      
+      // 根据您的API响应来返回结果
+      return { valid: result.is_valid };
 
-      return { valid, autocorrect };
-    } catch (err) {
-      console.error("验证失败：", email, err);
-      return { valid: false, autocorrect: null };
+    } catch (error) {
+      console.error("验证失败:", email, error);
+      // 网络错误等情况，我们也默认它无效
+      return { valid: false };
     }
   };
+
 
   const validateEmails = async () => {
     setChecking(true);
     setHasChecked(false);
+    setInvalidEmails([]); // Clear previous results
+    setSuggestedCorrections([]); // Clear previous results
 
+    // ... 获取 to, cc, bcc 列表的代码保持不变 ...
     const item = Office.context.mailbox.item;
     const to = await fetchEmails(item.to);
     const cc = await fetchEmails(item.cc);
     const bcc = await fetchEmails(item.bcc);
 
-    // 新增：获取邮件正文和主题
-    const body = await fetchEmailBody(item);
-    const subject = await fetchEmailSubject(item);
-
-    setEmailBody(body);
-    setEmailSubject(subject);
-    console.log("邮件正文:", body);
-    console.log("邮件主题:", subject);
-
-
     const toList = [...new Set(to)];
     const ccList = [...new Set(cc)];
     const bccList = [...new Set(bcc)];
+    // ...
 
     if (previewOnly) {
       setPreviewData({ to: toList, cc: ccList, bcc: bccList });
@@ -157,28 +124,23 @@ const App = (props) => {
 
     const allEmails = [...new Set([...toList, ...ccList, ...bccList])];
     const invalid = [];
-    const corrections = [];
 
-    for (const email of allEmails) {
-      const result = await validateEmailWithResult(email);
+    // 使用 Promise.all 来并行处理所有API请求，以提高速度
+    const validationPromises = allEmails.map(email => validateEmailWithOwnBackend(email));
+    const results = await Promise.all(validationPromises);
 
+    results.forEach((result, index) => {
       if (!result.valid) {
-        invalid.push(email);
+        invalid.push(allEmails[index]);
       }
-
-      if (result.autocorrect && result.autocorrect !== email) {
-        corrections.push({ original: email, suggested: result.autocorrect });
-      }
-
-      await delay(1000); // 限速：每秒1次，避免 API 限流
-    }
+    });
 
     setInvalidEmails(invalid);
-    setSuggestedCorrections(corrections);
+    // 注意：这个后端版本没有拼写建议功能，您可以选择在前端保留或移除
+    // setSuggestedCorrections(corrections); 
     setChecking(false);
     setHasChecked(true);
   };
-
   return (
     <div className={styles.root}>
       <Header logo="assets/Brandlogo.png" title={title} message="Welcome" />
@@ -234,17 +196,6 @@ const App = (props) => {
                 <ul>{previewData.bcc.map((email, i) => <li key={`bcc-${i}`}>{email}</li>)}</ul>
               </>
             )}
-            {/* 新增：预览模式下的邮件主题和正文展示 */}
-            {emailSubject && (
-              <div style={{ marginTop: "12px" }}>
-                <strong>主题:</strong> <p>{emailSubject}</p>
-              </div>
-            )}
-            {emailBody && (
-              <div style={{ marginTop: "12px" }}>
-                <strong>正文:</strong> <p style={{ whiteSpace: "pre-wrap", maxHeight: "150px", overflowY: "auto", border: "1px dashed #eee", padding: "8px" }}>{emailBody}</p>
-              </div>
-            )}
           </div>
         )}
 
@@ -280,6 +231,7 @@ const App = (props) => {
           <p style={{ color: "green", marginTop: "12px" }}>✅ 所有邮箱验证通过！</p>
         )}
       </div>
+
     </div>
   );
 };
