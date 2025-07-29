@@ -13,21 +13,28 @@ Office.onReady(() => {
  * @param {Office.AddinCommands.Event} event The event object.
  */
 async function onMessageSendHandler(event) {
-  console.log("🚀 onMessageSendHandler function started!");
+  console.log("🚀 onMessageSendHandler function started! (Fallback Mode)");
 
   try {
+    // 回退到最简单的字符串数组，明确列出所有可能性
     const keywords = [
       // English
-      "attachment", "attach", "attached", "attaching",
-      "enclosed", "find attached", "see attached", "see the attachment",
-      "including", "review the attached",
-      ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".rar",
+      "attach", "attached", "attaching", "attachment", "attachments",
+      "enclosed",
+      "image", "images", // 明确列出单数和复数
+      "file", "files",   // 明确列出单数和复数
+      "find attached", "see attached", "review the attached",
+      "including",
 
       // Chinese (中文)
       "附件", "附上", "见附件", "查收", "请查收",
       "文件", "文档", "报告", "简历", "表格", "演示",
-      "照片"
+      "照片",
+
+      // File Extensions
+      ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".rar"
     ];
+
     const item = Office.context.mailbox.item;
 
     // --- SUBJECT CHECK ---
@@ -38,19 +45,19 @@ async function onMessageSendHandler(event) {
       });
     });
 
+    // 检查时，将邮件内容和关键字都转换为小写
     const lowerCaseSubject = subject.toLowerCase();
-    const subjectContainsKeyword = keywords.some(keyword => lowerCaseSubject.includes(keyword));
+    const subjectContainsKeyword = keywords.some(keyword => lowerCaseSubject.includes(keyword.toLowerCase()));
     console.log(`📌 Subject: "${lowerCaseSubject}"`);
     console.log(`✅ Subject contains keyword? ${subjectContainsKeyword}`);
 
     // --- BODY CHECK ---
     const body = await new Promise((resolve, reject) => {
       item.body.getAsync(Office.CoercionType.Text, (result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-          resolve(result.value);
-        } else {
+        if (result.status === Office.AsyncResultStatus.Succeeded) resolve(result.value);
+        else {
           console.error("❌ getAsync(body) failed:", result.error);
-          resolve(""); // fallback to empty
+          resolve("");
         }
       });
     });
@@ -58,17 +65,8 @@ async function onMessageSendHandler(event) {
     const lowerCaseBody = body.toLowerCase();
     const bodyContainsKeyword = keywords.some(keyword => lowerCaseBody.includes(keyword.toLowerCase()));
     console.log(`✅ Body contains keyword? ${bodyContainsKeyword}`);
-
-    // --- Printing Mail Content ---
-    // You can print the full subject and body here!
-    console.log("--- Mail Content Details ---");
-    console.log("Full Subject: ", subject);
-    // Be cautious with printing very long bodies to console, it might truncate or be hard to read.
-    // Consider truncating or only printing the start.
-    console.log("Full Body (first 200 chars): ", body);
-  
-
-
+    
+    // --- 其余代码保持不变 ---
     const keywordDetected = subjectContainsKeyword || bodyContainsKeyword;
 
     if (!keywordDetected) {
@@ -77,7 +75,6 @@ async function onMessageSendHandler(event) {
       return;
     }
 
-    // --- ATTACHMENT CHECK ---
     console.log("📎 Keywords detected. Checking attachments...");
     const attachments = await new Promise((resolve, reject) => {
       item.getAttachmentsAsync((result) => {
@@ -87,7 +84,6 @@ async function onMessageSendHandler(event) {
     });
 
     const hasRealAttachment = attachments.some(att => !att.isInline);
-    console.log(`✅ Has real (non-inline) attachment? ${hasRealAttachment}`);
 
     if (hasRealAttachment) {
       console.log("✅ Real attachment exists. Allowing send.");
@@ -100,11 +96,12 @@ async function onMessageSendHandler(event) {
         cancelLabel: "添加附件 (Add Attachment)"
       });
     }
+
   } catch (error) {
     console.error("❌ Unexpected error occurred:", error);
-    event.completed({ allowEvent: true }); // Allow send on error
+    event.completed({ allowEvent: true });
   }
 }
 
-// ⚠️ 关键步骤：在这里注册函数！
+// 注册函数
 Office.actions.associate("onMessageSendHandler", onMessageSendHandler);
