@@ -30,7 +30,7 @@ const App = (props) => {
   const listItems = [
     {
       icon: <Mail24Regular />,
-      primaryText: "Check email syntax and domain",
+      primaryText: "Check email syntax",
     },
     {
       icon: <ShieldCheckmark24Regular />,
