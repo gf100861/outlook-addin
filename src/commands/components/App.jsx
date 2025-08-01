@@ -64,37 +64,48 @@ const App = (props) => {
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const validateEmailWithOwnBackend = async (email) => {
-    // 您的后端服务器地址和API密钥
-    const API_URL = "https://email-validator-backend.vercel.app/api/validate";
-    const API_KEY = "hj122400";
+  // ✅ 修正后的版本
+  // ✅ 专门用于调用 AbstractAPI 的新函数
+  const validateWithAbstractAPI = async (email) => {
+    // AbstractAPI 的 URL 和你的 Key
+    const API_URL_BASE = "https://emailvalidation.abstractapi.com/v1/";
+    const API_KEY = "1b52d865f108441fac2f528e8b925218"; // 这是你提供的示例 Key
+
+    // 1. 将 email 和 api_key 拼接成完整的请求 URL
+    const fullUrl = `${API_URL_BASE}?api_key=${API_KEY}&email=${encodeURIComponent(email)}`;
 
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY
-        },
-        body: JSON.stringify({ email: email })
+      // 2. 发送 GET 请求，不需要 headers 和 body
+      const response = await fetch(fullUrl, {
+        method: 'GET', // 方法是 GET
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        console.error("API request failed with status:", response.status);
-        // 如果API请求失败 (例如密钥错误), 我们默认它无效
-        return { valid: false };
+        console.error("AbstractAPI 请求失败，状态码:", response.status, "错误信息:", result);
+        // API 请求失败，例如超出配额或 key 错误
+        return { valid: false, reason: result.error?.message || "API Error" };
       }
 
-      const result = await response.json();
-      console.log("后端验证结果:", email, result);
-      
-      // 根据您的API响应来返回结果
-      return { valid: result.is_valid };
+      console.log("AbstractAPI 验证结果:", email, result);
+
+      // 3. 根据 AbstractAPI 的响应来判断结果
+      // DELIVERABLE 是最可靠的“有效”状态
+      const isValid = result.deliverability === "DELIVERABLE";
+
+      // AbstractAPI 还能提供拼写建议！
+      const suggestion = result.autocorrect || "";
+
+      return {
+        valid: isValid,
+        reason: result.deliverability, // 将真实的 deliverability 状态作为原因
+        suggestion: suggestion // 返回拼写建议
+      };
 
     } catch (error) {
-      console.error("验证失败:", email, error);
-      // 网络错误等情况，我们也默认它无效
-      return { valid: false };
+      console.error("网络或其他错误:", email, error);
+      return { valid: false, reason: "Network Error", suggestion: "" };
     }
   };
 
@@ -102,8 +113,8 @@ const App = (props) => {
   const validateEmails = async () => {
     setChecking(true);
     setHasChecked(false);
-    setInvalidEmails([]); // Clear previous results
-    setSuggestedCorrections([]); // Clear previous results
+    setInvalidEmails([]);
+    setSuggestedCorrections([]); // 清空旧的建议
 
     // ... 获取 to, cc, bcc 列表的代码保持不变 ...
     const item = Office.context.mailbox.item;
@@ -111,33 +122,36 @@ const App = (props) => {
     const cc = await fetchEmails(item.cc);
     const bcc = await fetchEmails(item.bcc);
 
-    const toList = [...new Set(to)];
-    const ccList = [...new Set(cc)];
-    const bccList = [...new Set(bcc)];
-    // ...
+    const allEmails = [...new Set([...to, ...cc, ...bcc])]; // 合并并去重
 
+    // ...预览模式的代码不变...
     if (previewOnly) {
-      setPreviewData({ to: toList, cc: ccList, bcc: bccList });
-      setChecking(false);
+      // ...
       return;
     }
 
-    const allEmails = [...new Set([...toList, ...ccList, ...bccList])];
     const invalid = [];
+    const corrections = [];
 
-    // 使用 Promise.all 来并行处理所有API请求，以提高速度
-    const validationPromises = allEmails.map(email => validateEmailWithOwnBackend(email));
+    // 调用新的 AbstractAPI 验证函数
+    const validationPromises = allEmails.map(email => validateWithAbstractAPI(email));
     const results = await Promise.all(validationPromises);
 
     results.forEach((result, index) => {
       if (!result.valid) {
         invalid.push(allEmails[index]);
       }
+      // 如果有拼写建议，就收集起来
+      if (result.suggestion) {
+        corrections.push({
+          original: allEmails[index],
+          suggested: result.suggestion
+        });
+      }
     });
 
     setInvalidEmails(invalid);
-    // 注意：这个后端版本没有拼写建议功能，您可以选择在前端保留或移除
-    // setSuggestedCorrections(corrections); 
+    setSuggestedCorrections(corrections); // ✅ 现在可以更新拼写建议了！
     setChecking(false);
     setHasChecked(true);
   };
