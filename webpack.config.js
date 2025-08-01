@@ -21,13 +21,13 @@ module.exports = async (env, options) => {
       polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
       react: ["react", "react-dom"],
       taskpane: {
-        import: ["./src/taskpane/index.jsx", "./src/taskpane/taskpane.html"],
+        import: "./src/taskpane/index.jsx", // ✅ 只保留 JS 入口
         dependOn: "react",
       },
       commands: {
-        
-        import: [ "./src/commands/index.jsx","./src/commands/commands.html"],
-      }
+        import: "./src/commands/index.jsx", // ✅ 只保留 JS 入口
+        dependOn: "react", // ✅ 加上依赖，保持一致性
+      },
     },
     output: {
       clean: true,
@@ -59,10 +59,16 @@ module.exports = async (env, options) => {
       ],
     },
     plugins: [
+      // ✅ 将两个 HtmlWebpackPlugin 放在一起，更清晰
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
         chunks: ["polyfill", "taskpane", "react"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "commands.html",
+        template: "./src/commands/commands.html",
+        chunks: ["polyfill", "commands", "react"], // 确保 'commands' chunk 被注入
       }),
       new CopyWebpackPlugin({
         patterns: [
@@ -82,11 +88,6 @@ module.exports = async (env, options) => {
             },
           },
         ],
-      }),
-      new HtmlWebpackPlugin({
-        filename: "commands.html",
-        template: "./src/commands/commands.html",
-        chunks: ["polyfill", "commands","react"],
       }),
       new webpack.ProvidePlugin({
         Promise: ["es6-promise", "Promise"],
