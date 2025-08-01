@@ -66,7 +66,7 @@ const App = (props) => {
 
     const validateEmailWithOwnBackend = async (email) => {
     // 您的后端服务器地址和API密钥
-    const API_URL = "http://localhost:3001/validate";
+    const API_URL = "https://email-validator-backend.vercel.app/api/validate";
     const API_KEY = "hj122400";
 
     try {
