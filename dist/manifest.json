@@ -1,180 +1,222 @@
 {
-    "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
-    "id": "7c0bc464-1f42-4e7b-9271-e673a3782772",
-    "manifestVersion": "1.17",
-    "version": "1.0.0",
-    "name": {
-        "short": "My Office Add-in",
-        "full": "Contoso Task Pane Add-in"
-    },
-    "description": {
-        "short": "A template to get started.",
-        "full": "This is the template to get started."
-    },
-    "developer": {
-        "name": "Contoso",
-        "websiteUrl": "https://www.contoso.com",
-        "privacyUrl": "https://www.contoso.com/privacy",
-        "termsOfUseUrl": "https://www.contoso.com/servicesagreement"
-    },
-    "icons": {
-        "outline": "assets/outline.png",
-        "color": "assets/color.png"
-    },
-    "accentColor": "#230201",
-    "localizationInfo": {
-        "defaultLanguageTag": "en-us",
-        "additionalLanguages": []
-    },
-    "authorization": {
-        "permissions": {
-            "resourceSpecific": [
-                {
-                    "name": "Mailbox.ReadWrite.User",
-                    "type": "Delegated"
-                }
-            ]
-        }
-    },
-    "validDomains": [
-        "contoso.com"
-    ],
-    "extensions": [
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "7c0bc464-1f42-4e7b-9271-e673a3782772",
+  "name": {
+    "short": "邮箱助手",
+    "full": "智能附件发送助手 (Smart Attachment On-Send Assistant)"
+  },
+  "description": {
+    "short": "Checks for attachments before sending.",
+    "full": "This add-in uses Smart Alerts to check if an email mentioning attachments has any files attached before sending."
+  },
+  "developer": {
+    "name": "Louis Xin",
+    "websiteUrl": "https://outlook-addin-gilt.vercel.app/",
+    "privacyUrl": "https://outlook-addin-gilt.vercel.app/privacy",
+    "termsOfUseUrl": "https://outlook-addin-gilt.vercel.app/servicesagreement"
+  },
+  "icons": {
+    "outline": "assets/outline.png",
+    "color": "assets/color.png"
+  },
+  "accentColor": "#230201",
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
         {
-            "requirements": {
-                "scopes": [
-                    "mail"
-                ],
-                "capabilities": [
-                    {
-                        "name": "Mailbox",
-                        "minVersion": "1.3"
-                    }
-                ]
-            },
-            "runtimes": [
-                {
-                    "requirements": {
-                        "capabilities": [
-                            {
-                                "name": "Mailbox",
-                                "minVersion": "1.3"
-                            }
-                        ]
-                    },
-                    "id": "TaskPaneRuntime",
-                    "type": "general",
-                    "code": {
-                        "page": "https://www.contoso.com/taskpane.html"
-                    },
-                    "lifetime": "short",
-                    "actions": [
-                        {
-                            "id": "TaskPaneRuntimeShow",
-                            "type": "openPage",
-                            "pinnable": false,
-                            "view": "dashboard"
-                        }
-                    ]
-                },
-                {
-                    "id": "CommandsRuntime",
-                    "type": "general",
-                    "code": {
-                        "page": "https://www.contoso.com/commands.html",
-                        "script": "https://www.contoso.com/commands.js"
-                    },
-                    "lifetime": "short",
-                    "actions": [
-                        {
-                            "id": "action",
-                            "type": "executeFunction"
-                        }
-                    ]
-                }
-            ],
-            "ribbons": [
-                {
-                    "contexts": [
-                        "mailCompose"
-                    ],
-                    "tabs": [
-                        {
-                            "builtInTabId": "TabDefault",
-                            "groups": [
-                                {
-                                    "id": "msgComposeGroup",
-                                    "label": "Contoso Add-in",
-                                    "icons": [
-                                        {
-                                            "size": 16,
-                                            "url": "https://www.contoso.com/assets/icon-16.png"
-                                        },
-                                        {
-                                            "size": 32,
-                                            "url": "https://www.contoso.com/assets/icon-32.png"
-                                        },
-                                        {
-                                            "size": 80,
-                                            "url": "https://www.contoso.com/assets/icon-80.png"
-                                        }
-                                    ],
-                                    "controls": [
-                                        {
-                                            "id": "msgComposeOpenPaneButton",
-                                            "type": "button",
-                                            "label": "Show Task Pane",
-                                            "icons": [
-                                                {
-                                                    "size": 16,
-                                                    "url": "https://www.contoso.com/assets/icon-16.png"
-                                                },
-                                                {
-                                                    "size": 32,
-                                                    "url": "https://www.contoso.com/assets/icon-32.png"
-                                                },
-                                                {
-                                                    "size": 80,
-                                                    "url": "https://www.contoso.com/assets/icon-80.png"
-                                                }
-                                            ],
-                                            "supertip": {
-                                                "title": "Show Task Pane",
-                                                "description": "Opens a task pane."
-                                            },
-                                            "actionId": "TaskPaneRuntimeShow"
-                                        },
-                                        {
-                                            "id": "ActionButton",
-                                            "type": "button",
-                                            "label": "Perform an action",
-                                            "icons": [
-                                                {
-                                                    "size": 16,
-                                                    "url": "https://www.contoso.com/assets/icon-16.png"
-                                                },
-                                                {
-                                                    "size": 32,
-                                                    "url": "https://www.contoso.com/assets/icon-32.png"
-                                                },
-                                                {
-                                                    "size": 80,
-                                                    "url": "https://www.contoso.com/assets/icon-80.png"
-                                                }
-                                            ],
-                                            "supertip": {
-                                                "title": "Perform an action",
-                                                "description": "Perform an action when clicked."
-                                            },
-                                            "actionId": "action"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+          "name": "Mailbox.ReadWrite.User",
+          "type": "Delegated"
         }
-    ]
+      ]
+    }
+  },
+  "validDomains": [
+    "https://outlook-addin-gilt.vercel.app/"
+  ],
+  "extensions": [
+    {
+      "requirements": {
+        "scopes": [
+          "mail"
+        ],
+        "capabilities": [
+          {
+            "name": "Mailbox",
+            "minVersion": "1.9"
+          }
+        ]
+      },
+      "runtimes": [
+        {
+          "id": "CommandsRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://outlook-addin-gilt.vercel.app/commands.html",
+            "script": "https://outlook-addin-gilt.vercel.app/commands.js"
+          },
+          "lifetime": "long",
+          "actions": [
+            {
+              "id": "onMessageSendHandler",
+              "type": "executeFunction",
+              "displayName": "onMessageSendHandler"
+            }
+          ]
+        },
+        {
+          "requirements": {
+            "capabilities": [
+              {
+                "name": "Mailbox",
+                "minVersion": "1.3"
+              }
+            ]
+          },
+          "id": "TaskPaneRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://outlook-addin-gilt.vercel.app/taskpane.html",
+            "script": "https://outlook-addin-gilt.vercel.app/taskpane.js"
+          },
+          "lifetime": "short",
+          "actions": [
+            {
+              "id": "TaskPaneRuntimeShow",
+              "type": "openPage",
+              "pinnable": true,
+              "view": "columns"
+            }
+          ]
+        }
+      ],
+      "autoRunEvents": [
+        {
+          "requirements": {
+            "scopes": [
+              "mail"
+            ]
+          },
+          "events": [
+            {
+              "type": "messageSending",
+              "actionId": "onMessageSendHandler",
+              "options": {
+                "sendMode": "promptUser"
+              }
+            }
+          ]
+        }
+      ],
+      "ribbons": [
+        {
+          "contexts": [
+            "mailCompose"
+          ],
+          "tabs": [
+            {
+              "builtInTabId": "TabDefault",
+              "groups": [
+                {
+                  "id": "msgComposeGroup",
+                  "label": "邮箱助手",
+                  "icons": [
+                    {
+                      "size": 16,
+                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                    },
+                    {
+                      "size": 32,
+                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                    },
+                    {
+                      "size": 80,
+                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                    }
+                  ],
+                  "controls": [
+                    {
+                      "id": "comprehensiveToolsMenu",
+                      "type": "menu",
+                      "label": "邮件工具",
+                      "icons": [
+                        {
+                          "size": 16,
+                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                        },
+                        {
+                          "size": 32,
+                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                        },
+                        {
+                          "size": 80,
+                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                        }
+                      ],
+                      "supertip": {
+                        "title": "邮件工具",
+                        "description": "访问邮件和附件验证工具."
+                      },
+                      "actionId": "TaskPaneRuntimeShow",
+                      "items": [
+                        {
+                          "id": "emailValidatorMenuItem",
+                          "type": "menuItem",
+                          "label": "邮件验证器",
+                          "icons": [
+                            {
+                              "size": 16,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                            },
+                            {
+                              "size": 32,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                            },
+                            {
+                              "size": 80,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                            }
+                          ],
+                          "supertip": {
+                            "title": "邮件验证",
+                            "description": "打开验证任务窗格."
+                          },
+                          "actionId": "TaskPaneRuntimeShow"
+                        },
+                        {
+                          "id": "attachmentValidatorMenuItem",
+                          "type": "menuItem",
+                          "label": "附件验证",
+                          "icons": [
+                            {
+                              "size": 16,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                            },
+                            {
+                              "size": 32,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                            },
+                            {
+                              "size": 80,
+                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                            }
+                          ],
+                          "supertip": {
+                            "title": "附件验证",
+                            "description": "打开附件验证任务窗格."
+                          },
+                          "actionId": "TaskPaneRuntimeShow"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

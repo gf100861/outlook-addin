@@ -13,9 +13,9 @@
   },
   "developer": {
     "name": "Louis Xin",
-    "websiteUrl": "https://outlook-addin-gilt.vercel.app/",
-    "privacyUrl": "https://outlook-addin-gilt.vercel.app/privacy",
-    "termsOfUseUrl": "https://outlook-addin-gilt.vercel.app/servicesagreement"
+    "websiteUrl": "https://localhost:3000/",
+    "privacyUrl": "https://localhost:3000/privacy",
+    "termsOfUseUrl": "https://localhost:3000/servicesagreement"
   },
   "icons": {
     "outline": "assets/outline.png",
@@ -33,7 +33,7 @@
     }
   },
   "validDomains": [
-    "https://outlook-addin-gilt.vercel.app/"
+    "https://localhost:3000/"
   ],
   "extensions": [
     {
@@ -53,8 +53,8 @@
           "id": "CommandsRuntime",
           "type": "general",
           "code": {
-            "page": "https://outlook-addin-gilt.vercel.app/commands.html",
-            "script": "https://outlook-addin-gilt.vercel.app/commands.js"
+            "page": "https://localhost:3000/commands.html",
+            "script": "https://localhost:3000/commands.js"
           },
           "lifetime": "long",
           "actions": [
@@ -77,8 +77,8 @@
           "id": "TaskPaneRuntime",
           "type": "general",
           "code": {
-            "page": "https://outlook-addin-gilt.vercel.app/taskpane.html",
-            "script": "https://outlook-addin-gilt.vercel.app/taskpane.js"
+            "page": "https://localhost:3000/taskpane.html",
+            "script": "https://localhost:3000//taskpane.js"
           },
           "lifetime": "short",
           "actions": [
@@ -124,15 +124,15 @@
                   "icons": [
                     {
                       "size": 16,
-                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                      "url": "https://localhost:3000/assets/icon-16.png"
                     },
                     {
                       "size": 32,
-                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                      "url": "https://localhost:3000/assets/icon-32.png"
                     },
                     {
                       "size": 80,
-                      "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                      "url": "https://localhost:3000/assets/icon-80.png"
                     }
                   ],
                   "controls": [
@@ -143,15 +143,15 @@
                       "icons": [
                         {
                           "size": 16,
-                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                          "url": "https://localhost:3000/assets/icon-16.png"
                         },
                         {
                           "size": 32,
-                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                          "url": "https://localhost:3000/assets/icon-32.png"
                         },
                         {
                           "size": 80,
-                          "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                          "url": "https://localhost:3000/assets/icon-80.png"
                         }
                       ],
                       "supertip": {
@@ -167,15 +167,15 @@
                           "icons": [
                             {
                               "size": 16,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                              "url": "https://localhost:3000/assets/icon-16.png"
                             },
                             {
                               "size": 32,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                              "url": "https://localhost:3000/assets/icon-32.png"
                             },
                             {
                               "size": 80,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                              "url": "https://localhost:3000/assets/icon-80.png"
                             }
                           ],
                           "supertip": {
@@ -191,15 +191,15 @@
                           "icons": [
                             {
                               "size": 16,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-16.png"
+                              "url": "https://localhost:3000/assets/icon-16.png"
                             },
                             {
                               "size": 32,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-32.png"
+                              "url": "https://localhost:3000/assets/icon-32.png"
                             },
                             {
                               "size": 80,
-                              "url": "https://outlook-addin-gilt.vercel.app/assets/icon-80.png"
+                              "url": "https://localhost:3000/assets/icon-80.png"
                             }
                           ],
                           "supertip": {

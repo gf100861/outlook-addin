@@ -3,9 +3,8 @@
  * See LICENSE in the project root for license information.
  */
 
-// Make sure Office is ready before registering the handler
 Office.onReady(() => {
-  // If needed, Office.js is ready to be called
+    // If needed, Office.js is ready to be called
 });
 
 /**
@@ -13,95 +12,96 @@ Office.onReady(() => {
  * @param {Office.AddinCommands.Event} event The event object.
  */
 async function onMessageSendHandler(event) {
-  console.log("🚀 onMessageSendHandler function started! (Fallback Mode)");
+    console.log("🚀 onMessageSendHandler function started! (Final Version)");
 
-  try {
-    // 回退到最简单的字符串数组，明确列出所有可能性
-    const keywords = [
-      // English
-      "attach", "attached", "attaching", "attachment", "attachments",
-      "enclosed",
-      "image", "images", // 明确列出单数和复数
-      "file", "files",   // 明确列出单数和复数
-      "find attached", "see attached", "review the attached",
-      "including",
+    try {
+        // --- Keyword Lists ---
+        const imageKeywords = [
+            "image", "images", "picture", "photo", "screenshot",
+            "图片", "照片", "截图"
+        ];
+        
+        const generalKeywords = [
+            "attach", "attached", "attaching", "attachment", "attachments",
+            "enclosed", "file", "files", "find attached", "see attached", 
+            "review the attached", "including", "附件", "附上", "见附件", 
+            "查收", "请查收", "文件", "文档", "报告", "简历", "表格", "演示",
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".rar"
+        ];
+        
+        const item = Office.context.mailbox.item;
 
-      // Chinese (中文)
-      "附件", "附上", "见附件", "查收", "请查收",
-      "文件", "文档", "报告", "简历", "表格", "演示",
-      "照片",
+        // --- Get Subject and Body ---
+        const subject = await new Promise((resolve) => {
+            item.subject.getAsync((result) => resolve(result.status === Office.AsyncResultStatus.Succeeded ? result.value : ""));
+        });
+        const lowerCaseSubject = subject.toLowerCase();
 
-      // File Extensions
-      ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip", ".rar"
-    ];
+        const body = await new Promise((resolve) => {
+            item.body.getAsync(Office.CoercionType.Text, (result) => resolve(result.status === Office.AsyncResultStatus.Succeeded ? result.value : ""));
+        });
+        const lowerCaseBody = body.toLowerCase();
+        const fullText = lowerCaseSubject + " " + lowerCaseBody;
 
-    const item = Office.context.mailbox.item;
+        // --- Step 1: Keyword Detection ---
+        const imageKeywordFound = imageKeywords.some(keyword => fullText.includes(keyword));
+        // Ensure general keyword check doesn't overlap with image keywords if an image keyword is already found
+        const generalKeywordFound = !imageKeywordFound && generalKeywords.some(keyword => fullText.includes(keyword));
 
-    // --- SUBJECT CHECK ---
-    const subject = await new Promise((resolve, reject) => {
-      item.subject.getAsync((result) => {
-        if (result.status === Office.AsyncResultStatus.Failed) reject(result.error);
-        else resolve(result.value);
-      });
-    });
+        console.log(`🖼️ Image keyword found? ${imageKeywordFound}`);
+        console.log(`📎 General keyword found? ${generalKeywordFound}`);
 
-    // 检查时，将邮件内容和关键字都转换为小写
-    const lowerCaseSubject = subject.toLowerCase();
-    const subjectContainsKeyword = keywords.some(keyword => lowerCaseSubject.includes(keyword.toLowerCase()));
-    console.log(`📌 Subject: "${lowerCaseSubject}"`);
-    console.log(`✅ Subject contains keyword? ${subjectContainsKeyword}`);
-
-    // --- BODY CHECK ---
-    const body = await new Promise((resolve, reject) => {
-      item.body.getAsync(Office.CoercionType.Text, (result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) resolve(result.value);
-        else {
-          console.error("❌ getAsync(body) failed:", result.error);
-          resolve("");
+        // If no keywords are found at all, allow sending immediately.
+        if (!imageKeywordFound && !generalKeywordFound) {
+            console.log("➡️ No keywords found. Allowing send.");
+            event.completed({ allowEvent: true });
+            return;
         }
-      });
-    });
 
-    const lowerCaseBody = body.toLowerCase();
-    const bodyContainsKeyword = keywords.some(keyword => lowerCaseBody.includes(keyword.toLowerCase()));
-    console.log(`✅ Body contains keyword? ${bodyContainsKeyword}`);
-    
-    // --- 其余代码保持不变 ---
-    const keywordDetected = subjectContainsKeyword || bodyContainsKeyword;
+        // --- Step 2: Attachment Validation (only if a keyword was found) ---
+        console.log("📎 Keyword detected. Validating attachments...");
+        const attachments = await new Promise((resolve) => {
+            item.getAttachmentsAsync((result) => resolve(result.status === Office.AsyncResultStatus.Succeeded ? result.value : []));
+        });
 
-    if (!keywordDetected) {
-      console.log("➡️ No keywords found. Allowing send.");
-      event.completed({ allowEvent: true });
-      return;
+        let allowSend = false;
+
+        if (generalKeywordFound) {
+            // General keywords require a REAL (non-inline) attachment.
+            console.log("General keyword found. Checking for REAL attachments...");
+            if (attachments.some(att => !att.isInline)) {
+                console.log("✅ Real attachment found.");
+                allowSend = true;
+            } else {
+                console.log("❌ No real attachment found.");
+            }
+        } else if (imageKeywordFound) {
+            // Image keywords allow ANY attachment (inline or real).
+            console.log("Image keyword found. Checking for ANY attachments...");
+            if (attachments.length > 0) {
+                console.log("✅ An attachment (inline or real) was found.");
+                allowSend = true;
+            } else {
+                console.log("❌ No attachments of any kind were found.");
+            }
+        }
+
+        // --- Step 3: Final Decision ---
+        if (allowSend) {
+            console.log("✅ Requirements met. Allowing send.");
+            event.completed({ allowEvent: true });
+        } else {
+            console.warn("❗ Requirements NOT met. Blocking send.");
+            event.completed({
+                allowEvent: false,
+                errorMessage: "您似乎忘记添加附件了。(You seem to have forgotten an attachment.)",
+            });
+        }
+
+    } catch (error) {
+        console.error("❌ Unexpected error occurred:", error);
+        event.completed({ allowEvent: true });
     }
-
-    console.log("📎 Keywords detected. Checking attachments...");
-    const attachments = await new Promise((resolve, reject) => {
-      item.getAttachmentsAsync((result) => {
-        if (result.status === Office.AsyncResultStatus.Failed) reject(result.error);
-        else resolve(result.value);
-      });
-    });
-
-    const hasRealAttachment = attachments.some(att => !att.isInline);
-
-    if (hasRealAttachment) {
-      console.log("✅ Real attachment exists. Allowing send.");
-      event.completed({ allowEvent: true });
-    } else {
-      console.warn("❗ No real attachment. Blocking send.");
-      event.completed({
-        allowEvent: false,
-        errorMessage: "您似乎忘记添加附件了。(You seem to have forgotten an attachment.)",
-        cancelLabel: "添加附件 (Add Attachment)"
-      });
-    }
-
-  } catch (error) {
-    console.error("❌ Unexpected error occurred:", error);
-    event.completed({ allowEvent: true });
-  }
 }
 
-// 注册函数
 Office.actions.associate("onMessageSendHandler", onMessageSendHandler);

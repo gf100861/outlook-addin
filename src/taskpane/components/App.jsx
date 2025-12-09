@@ -30,17 +30,15 @@ const App = (props) => {
   const listItems = [
     {
       icon: <Mail24Regular />,
-      primaryText: "Check email syntax and domain",
+      primaryText: "Check email syntax",
     },
     {
       icon: <ShieldCheckmark24Regular />,
       primaryText: "Avoid invalid or risky emails",
-
     },
     {
       icon: <Lightbulb24Regular />,
       primaryText: "Improve input with live hints",
-
     },
   ];
 
@@ -64,37 +62,54 @@ const App = (props) => {
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const validateEmailWithOwnBackend = async (email) => {
-    // 您的后端服务器地址和API密钥
-    const API_URL = "https://email-validator-backend.vercel.app/api/validate";
-    const API_KEY = "hj122400";
+  // ✅ Corrected version
+  // ✅ New function specifically for calling AbstractAPI
+  const validateWithAbstractAPI = async (email) => {
+    // AbstractAPI URL and your Key
+    const API_URL_BASE = "https://emailvalidation.abstractapi.com/v1/";
+    const API_KEY = "1b52d865f108441fac2f528e8b925218"; // Your provided sample key
+
+    // 1. Concatenate email and api_key into the full request URL
+    const fullUrl = `${API_URL_BASE}?api_key=${API_KEY}&email=${encodeURIComponent(email)}`;
+
+    console.log(`Sending request to AbstractAPI for ${email}: ${fullUrl}`); // Log the request URL
 
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY
-        },
-        body: JSON.stringify({ email: email })
+      // 2. Send GET request, no headers or body needed
+      const response = await fetch(fullUrl, {
+        method: 'GET', // The method is GET
       });
 
-      if (!response.ok) {
-        console.error("API request failed with status:", response.status);
-        // 如果API请求失败 (例如密钥错误), 我们默认它无效
-        return { valid: false };
-      }
-
       const result = await response.json();
-      console.log("后端验证结果:", email, result);
       
-      // 根据您的API响应来返回结果
-      return { valid: result.is_valid };
+      console.log("Full response from AbstractAPI for:", email, result); // Log the full API response
+
+      if (!response.ok) {
+        console.error("AbstractAPI request failed, status code:", response.status, "Error message:", result);
+        // API request failed, e.g., quota exceeded or incorrect key
+        return { valid: false, reason: result.error?.message || "API Error" };
+      }
+      
+      // 3. Determine the result based on AbstractAPI's response
+      // DELIVERABLE is the most reliable "valid" state
+      const isValid = result.deliverability === "DELIVERABLE";
+
+      // AbstractAPI can also provide spelling suggestions!
+      const suggestion = result.autocorrect || "";
+      
+      const finalResult = {
+        valid: isValid,
+        reason: result.deliverability, // Use the actual deliverability status as the reason
+        suggestion: suggestion // Return the spelling suggestion
+      };
+      
+      console.log(`Validation result for ${email}:`, finalResult); // Log the processed result
+      
+      return finalResult;
 
     } catch (error) {
-      console.error("验证失败:", email, error);
-      // 网络错误等情况，我们也默认它无效
-      return { valid: false };
+      console.error(`Network or other error for ${email}:`, error); // Log network or other errors
+      return { valid: false, reason: "Network Error", suggestion: "" };
     }
   };
 
@@ -102,42 +117,46 @@ const App = (props) => {
   const validateEmails = async () => {
     setChecking(true);
     setHasChecked(false);
-    setInvalidEmails([]); // Clear previous results
-    setSuggestedCorrections([]); // Clear previous results
+    setInvalidEmails([]);
+    setSuggestedCorrections([]); // Clear old suggestions
 
-    // ... 获取 to, cc, bcc 列表的代码保持不变 ...
+    // ... code to get to, cc, bcc lists remains unchanged ...
     const item = Office.context.mailbox.item;
     const to = await fetchEmails(item.to);
     const cc = await fetchEmails(item.cc);
     const bcc = await fetchEmails(item.bcc);
 
-    const toList = [...new Set(to)];
-    const ccList = [...new Set(cc)];
-    const bccList = [...new Set(bcc)];
-    // ...
+    const allEmails = [...new Set([...to, ...cc, ...bcc])]; // Merge and deduplicate
 
+    // ... preview mode code remains unchanged...
     if (previewOnly) {
-      setPreviewData({ to: toList, cc: ccList, bcc: bccList });
+      setPreviewData({ to, cc, bcc });
       setChecking(false);
       return;
     }
 
-    const allEmails = [...new Set([...toList, ...ccList, ...bccList])];
     const invalid = [];
+    const corrections = [];
 
-    // 使用 Promise.all 来并行处理所有API请求，以提高速度
-    const validationPromises = allEmails.map(email => validateEmailWithOwnBackend(email));
+    // Call the new AbstractAPI validation function
+    const validationPromises = allEmails.map(email => validateWithAbstractAPI(email));
     const results = await Promise.all(validationPromises);
 
     results.forEach((result, index) => {
       if (!result.valid) {
         invalid.push(allEmails[index]);
       }
+      // If there is a spelling suggestion, collect it
+      if (result.suggestion) {
+        corrections.push({
+          original: allEmails[index],
+          suggested: result.suggestion
+        });
+      }
     });
 
     setInvalidEmails(invalid);
-    // 注意：这个后端版本没有拼写建议功能，您可以选择在前端保留或移除
-    // setSuggestedCorrections(corrections); 
+    setSuggestedCorrections(corrections); // ✅ Now you can update spelling suggestions!
     setChecking(false);
     setHasChecked(true);
   };
@@ -145,7 +164,7 @@ const App = (props) => {
     <div className={styles.root}>
       <Header logo="assets/Brandlogo.png" title={title} message="Welcome" />
       <HeroList message="Discover what this add-in can do for you today!" items={listItems} />
-      {/* 按钮区（横向对齐） */}
+      {/* Button area (horizontally aligned) */}
       <div
         style={{
           display: "flex",
@@ -156,18 +175,18 @@ const App = (props) => {
         }}
       >
         <Button appearance="primary" onClick={validateEmails} disabled={checking}>
-          {checking ? "正在处理..." : previewOnly ? "预览邮箱" : "验证邮箱"}
+          {checking ? "Processing..." : previewOnly ? "Preview Emails" : "Validate Emails"}
         </Button>
 
         <Button appearance="secondary" onClick={() => setPreviewOnly(!previewOnly)}>
-          {previewOnly ? "进入验证" : "进入预览"}
+          {previewOnly ? "Go to Validation" : "Go to Preview"}
         </Button>
       </div>
 
-      {/* 展示区（放按钮下方） */}
+      {/* Display area (below buttons) */}
       <div style={{ width: "100%" }}>
-        {/* 预览模式展示 */}
-        {previewOnly && (previewData.to.length || previewData.cc.length || previewData.bcc.length) > 0 && (
+        {/* Preview mode display */}
+        {previewOnly && (previewData.to.length > 0 || previewData.cc.length > 0 || previewData.bcc.length > 0) && (
           <div
             style={{
               marginTop: "16px",
@@ -177,7 +196,7 @@ const App = (props) => {
               backgroundColor: "#fafafa",
             }}
           >
-            <h4>📧 收件人邮箱预览：</h4>
+            <h4>📧 Recipient Email Preview:</h4>
             {previewData.to.length > 0 && (
               <>
                 <strong>To:</strong>
@@ -199,14 +218,14 @@ const App = (props) => {
           </div>
         )}
 
-        {/* 建议邮箱修正展示 */}
+        {/* Suggested email corrections display */}
         {hasChecked && suggestedCorrections.length > 0 && (
           <div style={{ marginTop: "16px", color: "#555" }}>
-            <h4>📬 建议邮箱修正：</h4>
+            <h4>📬 Suggested Email Corrections:</h4>
             <ul>
               {suggestedCorrections.map((item, index) => (
                 <li key={index}>
-                  建议将 <strong>{item.original}</strong> 修改为{" "}
+                  Suggest changing <strong>{item.original}</strong> to{" "}
                   <strong style={{ color: "#0066cc" }}>{item.suggested}</strong>
                 </li>
               ))}
@@ -214,10 +233,10 @@ const App = (props) => {
           </div>
         )}
 
-        {/* 无效邮箱展示 */}
+        {/* Invalid emails display */}
         {hasChecked && invalidEmails.length > 0 && (
           <div style={{ marginTop: "12px" }}>
-            <h4 style={{ color: "red" }}>⚠️ 以下邮箱可能无效：</h4>
+            <h4 style={{ color: "red" }}>⚠️ The following emails may be invalid:</h4>
             <ul>
               {invalidEmails.map((email, i) => (
                 <li key={i}>{email}</li>
@@ -226,9 +245,9 @@ const App = (props) => {
           </div>
         )}
 
-        {/* 所有邮箱通过提示 */}
+        {/* All emails passed message */}
         {hasChecked && invalidEmails.length === 0 && !checking && (
-          <p style={{ color: "green", marginTop: "12px" }}>✅ 所有邮箱验证通过！</p>
+          <p style={{ color: "green", marginTop: "12px" }}>✅ All emails passed validation!</p>
         )}
       </div>
 
